@@ -1,10 +1,10 @@
 package org.gossip.actors
 
-import scala.actors.Actor
+import akka.actor.Actor
 
 class WorkerActor extends Actor{
 
   def receive = {
-    
+    null
   }
 }

@@ -12,6 +12,8 @@ libraryDependencies += "log4j" % "log4j" % "1.2.17" % "provided"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
+libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3.10"
+
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
 jarName in assembly := "gossip.jar"

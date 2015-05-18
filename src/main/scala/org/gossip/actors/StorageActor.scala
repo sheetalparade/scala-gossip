@@ -1,6 +1,6 @@
 package org.gossip.actors
 
-import scala.actors.Actor
+import akka.actor.Actor
 
 /**
  * StorageActor manages the state of data received from various agents on the cluster.
@@ -11,6 +11,6 @@ import scala.actors.Actor
 class StorageActor extends Actor{
 
   def receive = {
-    
+    null
   }
 }
