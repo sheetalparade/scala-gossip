@@ -1,4 +1,4 @@
-package org.gossip.messages
+package org.gossip.state
 
 import java.net.InetAddress
 
