@@ -2,8 +2,9 @@ package org.gossip.messages
 import java.net.InetAddress
 import org.gossip.state.State
 import org.gossip.state.GossipDigest
+import com.typesafe.scalalogging._
 
-trait Message extends Serializable {
+trait Message extends Serializable with LazyLogging  {
   
     /**
    * Message header
@@ -28,16 +29,16 @@ trait Message extends Serializable {
   def messageHandler(message: Message) = message match {
 
       case GossipSyn(header: Header, body: Array[Byte], version: Int, clusterName: String, gossipDigests: List[GossipDigest]) => 
-        println("Recieved GOSSIP SYNC")    
+        logger.info("Recieved GOSSIP SYNC")
         
         
       case GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, State]) =>
-        println("Recieved GOSSIP ACK")
+        logger.info("Recieved GOSSIP ACK")
         //handle
         //GossipSyn ("", )
       
       case GossipSynAck(header: Header, body: Array[Byte], version: Int, gossipDigests: List[GossipDigest], states: Map[InetAddress, State]) => println("Recieved GOSSIP SYNC ACK")
-        println("Recieved GOSSIP SYN ACK")
+        logger.info("Recieved GOSSIP SYN ACK")
 
     }
   
