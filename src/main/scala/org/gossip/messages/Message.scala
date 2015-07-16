@@ -29,7 +29,13 @@ trait Message extends Serializable with LazyLogging  {
   def messageHandler(message: Message) = message match {
 
       case GossipSyn(header: Header, body: Array[Byte], version: Int, clusterName: String, gossipDigests: List[GossipDigest]) => 
+        val from_ = header.from
+        //TODO check for cluster clusterName.
+        //TODO use gossipDigests to notify failure detectors.
+        //TODO examine gossipDigests and prepare acks
+        
         logger.info("Recieved GOSSIP SYNC")
+        
         
         
       case GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, State]) =>
