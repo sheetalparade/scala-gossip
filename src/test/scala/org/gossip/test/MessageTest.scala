@@ -2,7 +2,7 @@ package org.gossip.test
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.actor.ActorLogging
-import org.gossip.messages.{Message, Verb, GossipSyn, Header}
+import org.gossip.messages.{Message, Verb, GossipSyn, Header, MessageHandler}
 import org.gossip.state.GossipDigest
 
 
@@ -21,7 +21,7 @@ object MessageTest extends App {
         
       case msg : Message => 
         log.info(s"Received message ${msg}")
-        msg.messageHandler(msg)
+        MessageHandler.handle(msg)
         
       case _ =>
         log.error("Unexpected message recieved")

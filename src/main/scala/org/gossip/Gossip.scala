@@ -36,23 +36,4 @@ class Gossip(binding: InetAddress, port: Int) {
 
   }
 
-  /**
-   * This method is called by the syn message handler.<p>
-   * Calculates the delta between the received list of gossipDigests
-   * and the one that this node has; and prepare:
-   * <li> 
-   * 1) A list of request of new data from the sender (gossip initiator)
-   * to overwrite our old state.
-   * </li>
-   * <li>
-   * 2) A Map of endpoints <-> state to be send to the sender to 
-   * overwrite their old state.
-   * </li>
-   * The comparison is done based on the generation number 
-   * and the version number.
-   */
-  def calculateDelta(gossipDigests: List[GossipDigest], requestGossipData: List[GossipDigest], sendGossipData: Map[InetAddress, GossipDigest]) = {
-
-  }
-
 }

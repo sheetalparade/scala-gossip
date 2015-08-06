@@ -15,9 +15,6 @@ trait StorageActor extends Actor{
 
   val log = Logging(context.system, this)
   
-  def receive = {
-    null
-  }
 }
 
 /**
