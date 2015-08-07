@@ -18,3 +18,8 @@ project/plugins/project/
 .classpath
 .project
 .settings
+
+#IntelliJ specific
+.cache-main
+.idea/
+gossip.iml

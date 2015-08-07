@@ -6,13 +6,25 @@
  *
  */
 
-import java.net.InetAddress
+import java.net.{InetSocketAddress, InetAddress}
+import akka.actor.{Props, ActorSystem}
+import akka.io.Tcp.Bind
+import org.gossip.actors.ServerActor
 import org.gossip.state.GossipDigest
 
-object Gossip extends App {
+object Gossip  {
+  
+  def main(args: Array[String]) {
   println("Hi this is start of Gossip implementation")
   println()
-  System.exit(0)
+
+  val gossip = new Gossip( InetAddress.getLocalHost, 40000)
+
+
+  sys.addShutdownHook()
+  println("End of Gossip")
+//  System.exit(0)
+  }
 }
 
 /**
@@ -24,9 +36,9 @@ class Gossip(binding: InetAddress, port: Int) {
   /**
    * Initial the class
    */
-  def init = {
-
-  }
+  val actorSystem = ActorSystem()
+  val serverActor = actorSystem.actorOf(ServerActor.props (new InetSocketAddress(binding, port)))
+  serverActor ! Bind
 
   /**
    * Start gossiping with initial communication with seed servers.
