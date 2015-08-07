@@ -36,6 +36,9 @@ object MessageTest extends App {
   val sender = system.actorOf(Props(classOf[TestGossiper]), "sender")
   val receiver = system.actorOf(Props(classOf[TestGossiper]), "receiver")
 
-  receiver.tell(syn, sender) 
+  receiver.tell(syn, sender)
+  
+  /* we are done here */
+  system.shutdown;
 
 }
