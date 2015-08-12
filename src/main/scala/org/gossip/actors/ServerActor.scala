@@ -1,39 +1,42 @@
 package org.gossip.actors
 
-import java.net.InetSocketAddress
-import akka.actor.Actor
-import akka.actor.ActorLogging
+import akka.actor.{ActorRef, Actor, ActorLogging, Props}
 import akka.io.{IO, Tcp}
-import akka.actor.Props
 
 import com.typesafe.scalalogging._
 
 
-object ServerActor {
-  def props(inetSocketAddress: InetSocketAddress): Props = Props(classOf[ServerActor], inetSocketAddress)
+object ServerSystem {
+  def props (workers : Class[_ <: WorkerActor]) : Props = Props.create(classOf[ServerActor], workers)
 }
 /**
  * Server actor starts the server to listen for gossip on the netowork
  */
-class ServerActor(inetSocketAddress: InetSocketAddress) extends Actor with ActorLogging {
+class ServerActor(workers : Class[_ <: WorkerActor]) extends Actor with ActorLogging {
   import context.system
   import akka.io.Tcp._
-  log.debug(s"now in ServerActor $inetSocketAddress")
 
-  IO(Tcp) ! Bind(self, inetSocketAddress)
+  def getHandler: ActorRef = {
+    context.actorOf(WorkerSystem.props(workers))
+  }
 
   override def receive : Receive  = {
+    case bind : Bind =>
+      log.info(s"ServerActor Binding $bind")
+      IO(Tcp) ! bind
     case Connected(r, l) =>
-      log.info(s"remote ${r} connected to ${l}")
-      val handler = context.actorOf(Props[WorkerActor])
+      log.info(s"ServerActor remote ${r} connected to ${l}")
       val connection = sender
-      connection ! Register(handler)
+      connection ! Register(getHandler)
     case CommandFailed(_: Bind) =>
-      log.info(s"not connected")
+      log.info(s"ServerActor not connected")
       context stop self
-    case b @ Bound(localAddress) =>
-      log.info(s"Connected and accepting request. $b")
+    case b : Bound =>
+      log.info(s"ServerActor Connected and accepting request. $b")
+    case c @ Close =>
+      log.info(s"ServerActor Closing .. $c")
+      context stop self
     case x @ _ =>
-      log.info(s"in default $x")
+      log.info(s"ServerActor in default event received is $x")
   }
 }
