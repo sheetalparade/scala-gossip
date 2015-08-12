@@ -1,3 +1,4 @@
+package org.gossip
 
 /**
  * This is start of a Gossip Implementation.
@@ -6,46 +7,86 @@
  *
  */
 
-import java.net.{InetSocketAddress, InetAddress}
-import akka.actor.{Props, ActorSystem}
-import akka.io.Tcp.Bind
-import org.gossip.actors.ServerActor
-import org.gossip.state.GossipDigest
+import java.net.{InetAddress, InetSocketAddress}
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
 
-object Gossip  {
-  
+import akka.actor.ActorSystem
+import akka.io.Tcp._
+import akka.util.ByteString
+import org.gossip.actors.{ServerSystem, WorkerActor, WorkerSystem}
+
+object Gossip {
+  /**
+   * Only used for testing and when used as standalone application.
+   *
+   * Use case as standalone application are very minimal and might not be used at all.
+   *
+   * @param args
+   */
   def main(args: Array[String]) {
-  println("Hi this is start of Gossip implementation")
-  println()
+    println("Hi this is start of Gossip implementation")
+    println()
 
-  val gossip = new Gossip( InetAddress.getLocalHost, 40000)
+    val gossip = new Gossip(InetAddress.getLoopbackAddress, 4000, classOf[DummyWorkerActor])
+
+    Thread.sleep(5000)
+
+    class DummyWorkerActor extends WorkerActor() {
+      override def handleMessage(data: ByteBuffer): ByteBuffer = {
+        println(s"received ${data}")
+        println("returning World")
+        return ByteBuffer.wrap("World".getBytes())
+      }
+    }
+    gossip.start(new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), classOf[DummyWorkerActor], ByteBuffer.wrap("Hello".getBytes()))
 
 
-  sys.addShutdownHook()
-  println("End of Gossip")
-//  System.exit(0)
+    gossip.awaitTermination
+    println("End of Gossip")
+//    gossip.shutdown
+//    sys.addShutdownHook()
+      System.exit(0)
   }
 }
 
 /**
+ *
  * Create a Gossip Class with binding network address and port.
  *
+ * To be used within broader framework.
+ *
+ * Starts the servers on given ip and port.
  */
-class Gossip(binding: InetAddress, port: Int) {
+class Gossip(binding: InetAddress, port: Int, worker: Class[_ <:WorkerActor]) {
 
   /**
-   * Initial the class
+   * Initialize the class
    */
   val actorSystem = ActorSystem()
-  val serverActor = actorSystem.actorOf(ServerActor.props (new InetSocketAddress(binding, port)))
-  serverActor ! Bind
+  val serverActor = actorSystem.actorOf(ServerSystem.props (worker))
+
+  serverActor ! Bind(serverActor, new InetSocketAddress(binding, port))
 
   /**
    * Start gossiping with initial communication with seed servers.
    * The seed server could be itself and no communication needed.
    */
-  def start(seed: InetAddress) {
-
+  def start(seed: InetSocketAddress, worker: Class[_ <:WorkerActor], byteBuffer: ByteBuffer) {
+    println(s"Connect to seed $seed with worker $worker")
+    val workerActor = actorSystem.actorOf(WorkerSystem.props(worker))
+    workerActor ! Connect(remoteAddress = seed)
+    println("now connected and sleep")
+    Thread.sleep(1000)
+    workerActor ! Write(ByteString(byteBuffer), NoAck)
   }
 
+  def shutdown: Unit = {
+    serverActor ! Close
+    actorSystem.shutdown()
+  }
+
+  def awaitTermination: Unit = {
+    actorSystem.awaitTermination()
+  }
 }
