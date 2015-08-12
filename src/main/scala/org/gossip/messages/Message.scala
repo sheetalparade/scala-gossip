@@ -1,6 +1,6 @@
 package org.gossip.messages
 import java.net.InetAddress
-import org.gossip.state.State
+import org.gossip.state.NodeState
 import org.gossip.state.GossipDigest
 import com.typesafe.scalalogging._
 
@@ -13,12 +13,12 @@ case class GossipSyn(header: Header, body: Array[Byte], version: Int, clusterNam
 /**
  * An ack to {@link GossipSyn} by the peer node.
  */
-case class GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, State]) extends Message
+case class GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, NodeState]) extends Message
 
 /**
  * An ack by the node originating the gossip handshake to the peer node, an ack to {@link GossipAck}
  */
-case class GossipSynAck(header: Header, body: Array[Byte], version: Int, gossipDigests: List[GossipDigest], states: Map[InetAddress, State]) extends Message
+case class GossipSynAck(header: Header, body: Array[Byte], version: Int, gossipDigests: List[GossipDigest], states: Map[InetAddress, NodeState]) extends Message
   
 
 object MessageHandler extends LazyLogging {
@@ -39,12 +39,12 @@ object MessageHandler extends LazyLogging {
 
       logger.info("Recieved GOSSIP SYNC")
 
-    case GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, State]) =>
+    case GossipAck(header: Header, body: Array[Byte], version: Int, states: Map[InetAddress, NodeState]) =>
       logger.info("Recieved GOSSIP ACK")
     //handle
     //GossipSyn ("", )
 
-    case GossipSynAck(header: Header, body: Array[Byte], version: Int, gossipDigests: List[GossipDigest], states: Map[InetAddress, State]) =>
+    case GossipSynAck(header: Header, body: Array[Byte], version: Int, gossipDigests: List[GossipDigest], states: Map[InetAddress, NodeState]) =>
       logger.info("Recieved GOSSIP SYN ACK")
 
   }

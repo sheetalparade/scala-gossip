@@ -2,7 +2,7 @@ package org.gossip.actors
 
 import akka.actor.Actor
 import java.net.InetAddress
-import org.gossip.state.State
+import org.gossip.state.NodeState
 import akka.event.Logging
 
 /**
@@ -33,7 +33,7 @@ class MemoryStorage extends StorageActor {
   /**
    * Stores the local (known) state of endpoints.
    */
-  private var endpointStateMap = Map[InetAddress, State]()
+  private var endpointStateMap = Map[InetAddress, NodeState]()
   
   /**
    * A list of live endpoints
