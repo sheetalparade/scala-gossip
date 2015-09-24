@@ -3,7 +3,7 @@ package org.gossip.state
 import java.net.InetAddress
 
 /**
- * A gossip digest consist of 
+ * A gossip digest contains information about a specific node that is currently known. 
  * <ul>
  * <li> Node address (directly reachable)
  * <li> Generation, increases after node restart, helps to track node restarts.
