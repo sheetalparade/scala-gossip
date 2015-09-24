@@ -2,15 +2,19 @@ package org.gossip.test
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.actor.ActorLogging
-import org.gossip.messages.{Message, Verb, GossipSyn, Header, MessageHandler}
+import org.gossip.messages.{Message, Verb, GossipSyn, MessageHandler}
 import org.gossip.state.GossipDigest
+import org.gossip.messages.GossipSyn
 
 
 object MessageTest extends App {
   
-  val header = new Header(java.net.InetAddress.getLocalHost(), Verb.GOSSIP_SYN, Map[String, Array[Byte]]())
+  //val header = new Header(java.net.InetAddress.getLocalHost(), Verb.GOSSIP_SYN, Map[String, Array[Byte]]())
   
-  val syn = GossipSyn(header, Array[Byte](), 1, "Test Cluster", List[GossipDigest]())
+  val syn = GossipSyn("Test Cluster", List[GossipDigest]())
+  syn.from = java.net.InetAddress.getLocalHost()
+  syn.verb = Verb.GOSSIP_SYN
+  syn.options = Map[String, Array[Byte]]()
   
   /**
    * Test sender
@@ -22,7 +26,7 @@ object MessageTest extends App {
       case msg : Message => 
         log.info(s"Received message ${msg}")
         MessageHandler.handle(msg)
-        
+
       case _ =>
         log.error("Unexpected message recieved")
     }

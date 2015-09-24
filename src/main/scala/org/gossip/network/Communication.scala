@@ -30,7 +30,7 @@ object Communication {
 
     Thread.sleep(5000)
 
-    class DummyWorkerActor extends WorkerActor() {
+    class DummyWorkerActor extends WorkerActor {
       override def handleMessage(data: ByteBuffer): ByteBuffer = {
         println(s"received ${data}")
         println("returning World")
