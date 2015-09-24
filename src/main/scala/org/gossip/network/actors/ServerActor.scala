@@ -1,4 +1,4 @@
-package org.gossip.actors
+package org.gossip.network.actors
 
 import akka.actor.{ActorRef, Actor, ActorLogging, Props}
 import akka.io.{IO, Tcp}

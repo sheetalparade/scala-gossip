@@ -1,4 +1,4 @@
-package org.gossip.actors
+package org.gossip.network.actors
 
 import akka.actor.Actor
 import java.net.InetAddress

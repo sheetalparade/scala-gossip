@@ -1,4 +1,4 @@
-package org.gossip.actors
+package org.gossip.network.actors
 
 
 import java.nio.ByteBuffer
@@ -26,42 +26,40 @@ abstract class WorkerActor extends Actor with ActorLogging {
 			context stop self
 		case received : Received =>
 			log.info(s"WorkerActor received message $received")
-			val returnMsg = handleMessage(received.data.asByteBuffer)
-			val connection = sender()
-			if(returnMsg != null){
-				connection ! Write(ByteString(returnMsg), NoAck)
-			}else{
-				connection ! Close
-			}
+      handleReceive(received)
 		case connected @ Connected(remote, local) =>
 			log.info(s"WorkerActor successfully connected $connected")
 			val connection = sender()
 			connection ! Register(self)
 			context become {
 				case write : Write =>
-					log.info(s"WorkerActor writing message $write to $connection")
+					log.info(s"WorkerActor-CONTEXT writing message $write to $connection")
 					connection ! write
 				case "close" =>
-					log.info(s"WorkerActor closing connection as message receive close")
+					log.info(s"WorkerActor-CONTEXT closing connection as message receive close")
 					connection ! Close
 				case _: ConnectionClosed =>
-					log.info(s"WorkerActor closing connection")
+					log.info(s"WorkerActor-CONTEXT closing connection")
 					context stop self
 				case received : Received =>
 					log.info(s"WorkerActor-CONTEXT received message $received")
-					val returnMsg = handleMessage(received.data.asByteBuffer)
-					val connection = sender()
-					if(returnMsg != null){
-						connection ! Write(ByteString(returnMsg), NoAck)
-					}else{
-						connection ! Close
-					}
+          handleReceive(received)
 				case _ =>
-					log.info(s"WorkerActor default case")
+					log.info(s"WorkerActor-CONTEXT default case")
 			}
+    case _ =>
+      log.info(s"WorkerActor default case")
 	}
 
 	def handleMessage(data: ByteBuffer): ByteBuffer
-
-
+  
+  private def handleReceive (received : Received) = {
+          val returnMsg = handleMessage(received.data.asByteBuffer)
+          val connection = sender()
+          if(returnMsg != null){
+            connection ! Write(ByteString(returnMsg), NoAck)
+          }else{
+            connection ! Close
+          }
+  }
 }
