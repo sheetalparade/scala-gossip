@@ -5,14 +5,16 @@ import akka.io.{IO, Tcp}
 
 import com.typesafe.scalalogging._
 
-
+/**
+ * 
+ */
 object ServerSystem {
   def props (workers : Class[_ <: WorkerActor]) : Props = Props.create(classOf[ServerActor], workers)
 }
 /**
  * Server actor starts the server to listen for gossip on the netowork
  */
-class ServerActor(workers : Class[_ <: WorkerActor]) extends Actor with ActorLogging {
+final class ServerActor(workers : Class[_ <: WorkerActor]) extends Actor with ActorLogging {
   import context.system
   import akka.io.Tcp._
 

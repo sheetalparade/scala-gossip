@@ -6,12 +6,29 @@ import akka.util.ByteString
 import java.nio.ByteBuffer
 
 /**
+ * Implementation of WorkerActor
+ * 
+ * StorageWorkers handles all incoming request from the server. 
+ * This class is aware of all storage needs. All writes to 
+ * Storage should be handles through this Actor to avoid 
+ * data concurrency issues. This is still a TODO item.
+ * 
+ * 
+ * 
  * @author sparade
  */
 class StorageWorkerActor extends WorkerActor with ActorLogging{
     
-  override def handleMessage(data: Iterable[ByteBuffer]): ByteBuffer = {
+  override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
     return null;  
+  }
+  
+  override def firstMessage: ByteBuffer = {
+    return null;
+  }
+  
+  override def handleStorageMessage(data: Any) : ByteBuffer = {
+    return null;
   }
 
 }
