@@ -13,6 +13,7 @@ import akka.actor.ActorSystem
 import akka.io.Tcp._
 import akka.util.ByteString
 import org.gossip.network.actors.{ServerSystem, WorkerActor, WorkerSystem}
+import akka.util.ByteStringBuilder
 
 object Communication {
   /**
@@ -31,10 +32,10 @@ object Communication {
     Thread.sleep(5000)
 
     class DummyWorkerActor extends WorkerActor {
-      override def handleMessage(data: ByteBuffer): ByteBuffer = {
+      override def handleMessage(data: Iterable[ByteBuffer]): ByteBuffer = {
         println(s"received ${data}")
         println("returning World")
-        return ByteBuffer.wrap("World".getBytes())
+        return ByteBuffer.wrap("World".getBytes)
       }
     }
     communication.connect(new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), classOf[DummyWorkerActor], ByteBuffer.wrap("Hello".getBytes()))

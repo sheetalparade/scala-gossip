@@ -51,10 +51,10 @@ abstract class WorkerActor extends Actor with ActorLogging {
       log.info(s"WorkerActor default case")
 	}
 
-	def handleMessage(data: ByteBuffer): ByteBuffer
+	def handleMessage(data: Iterable[ByteBuffer]): ByteBuffer
   
   private def handleReceive (received : Received) = {
-          val returnMsg = handleMessage(received.data.asByteBuffer)
+          val returnMsg = handleMessage(received.data.asByteBuffers)
           val connection = sender()
           if(returnMsg != null){
             connection ! Write(ByteString(returnMsg), NoAck)
