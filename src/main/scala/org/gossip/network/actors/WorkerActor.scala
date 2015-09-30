@@ -6,10 +6,12 @@ import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 
 final object WorkerSystem {
-  def props(worker: Class[_ <: WorkerActor]): Props = Props.create(worker)
+  def props(handler: WorkerHandler): Props = Props.create(classOf[WorkerActor], handler)
 }
 
-abstract class WorkerActor extends Actor with ActorLogging {
+final class WorkerActor(handler: WorkerHandler) extends Actor with ActorLogging {
+  
+  val handlerObj = handler
 
   import akka.io.Tcp._
   import context.system
@@ -46,17 +48,17 @@ abstract class WorkerActor extends Actor with ActorLogging {
           log.info(s"WorkerActor-CONTEXT default case")
       }
       log.info(s"WorkerActor wiriting back initial message after connection.")
-      connection ! Write(ByteString(firstMessage), NoAck)
+      connection ! Write(ByteString(handler.firstMessage), NoAck)
     case Closed =>
       log.info(s"WorkerActor connection closed.")
       context stop self
     case de @ _ =>
       log.info(s"WorkerActor default case $de")
-      handleStorageMessage(de)
+      handler.handleStorageMessage(de)
   }
 
   private def handleReceive(received: Received) = {
-    val returnMsg = handleRemoteMessage(received.data.toByteBuffer)
+    val returnMsg = handler.handleRemoteMessage(received.data.toByteBuffer)
     val connection = sender()
     if (returnMsg != null) {
       connection ! Write(ByteString(returnMsg), NoAck)
@@ -64,11 +66,5 @@ abstract class WorkerActor extends Actor with ActorLogging {
       connection ! Close
     }
   }
-
-  def handleRemoteMessage(data: ByteBuffer): ByteBuffer
-  
-  def handleStorageMessage(data: Any) : ByteBuffer
-  
-  def firstMessage : ByteBuffer 
   
 }

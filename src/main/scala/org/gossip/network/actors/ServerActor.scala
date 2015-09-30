@@ -8,18 +8,18 @@ import com.typesafe.scalalogging._
 /**
  * 
  */
-object ServerSystem {
-  def props (workers : Class[_ <: WorkerActor]) : Props = Props.create(classOf[ServerActor], workers)
+final object ServerSystem {
+  def props (handler : WorkerHandler) : Props = Props.create(classOf[ServerActor], handler)
 }
 /**
  * Server actor starts the server to listen for gossip on the netowork
  */
-final class ServerActor(workers : Class[_ <: WorkerActor]) extends Actor with ActorLogging {
+final class ServerActor(handler: WorkerHandler) extends Actor with ActorLogging {
   import context.system
   import akka.io.Tcp._
 
   def getHandler: ActorRef = {
-    context.actorOf(WorkerSystem.props(workers))
+    context.actorOf(WorkerSystem.props(handler))
   }
 
   override def receive : Receive  = {

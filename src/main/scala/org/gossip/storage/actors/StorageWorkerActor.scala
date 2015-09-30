@@ -4,6 +4,7 @@ import org.gossip.network.actors.WorkerActor
 import akka.actor.ActorLogging
 import akka.util.ByteString
 import java.nio.ByteBuffer
+import org.gossip.network.actors.WorkerHandler
 
 /**
  * Implementation of WorkerActor
@@ -17,7 +18,7 @@ import java.nio.ByteBuffer
  * 
  * @author sparade
  */
-class StorageWorkerActor extends WorkerActor with ActorLogging{
+class StorageWorkerActor extends WorkerHandler{
     
   override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
     return null;  
