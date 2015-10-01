@@ -1,6 +1,5 @@
 package org.gossip.storage.actors
 
-import org.gossip.network.actors.WorkerActor
 import akka.actor.ActorLogging
 import akka.util.ByteString
 import java.nio.ByteBuffer

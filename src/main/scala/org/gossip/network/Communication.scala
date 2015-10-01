@@ -1,20 +1,13 @@
 package org.gossip.network
 
-/**
- * This is start of a Gossip Implementation.
- *
- * This class will be used to run Gossip as standalone application.
- *
- */
-
-import java.net.{ InetAddress, InetSocketAddress }
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+
+import org.gossip.network.actors._
+
 import akka.actor.ActorSystem
 import akka.io.Tcp._
-import akka.util.ByteString
-import org.gossip.network.actors.{ ServerSystem, WorkerActor, WorkerSystem }
-import akka.util.ByteStringBuilder
-import org.gossip.network.actors.WorkerHandler
 
 object Communication {
   /**
