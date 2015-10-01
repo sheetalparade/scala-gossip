@@ -11,7 +11,7 @@ import akka.io.Tcp._
 
 object Communication {
   
-  var commObjs :Map[String, Communication] = _
+  var commObjs :Map[String, Communication] = Map()
   
   /**
    * single communication per name-space.

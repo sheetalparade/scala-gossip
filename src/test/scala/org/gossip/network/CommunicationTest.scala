@@ -39,11 +39,13 @@ object CommunicationTest {
   class DummyWorkerActor extends WorkerHandler {
     var countRemote = 0;
     override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
-      println(s"received ${new String(data.array())}")
+      val recd = new String(data.array())
+      println(s"received $recd")
       countRemote = countRemote + 1;
       if (countRemote == 5) return null;
-      println("returning World")
-      return ByteBuffer.wrap("World".getBytes)
+      val ret = if(recd == "World") "Hello" else "World"
+      println(s"returning $ret")
+      return ByteBuffer.wrap(ret.getBytes)
     }
 
     override def firstMessage: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
