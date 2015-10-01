@@ -12,8 +12,9 @@ import org.gossip.network.actors.WorkerHandler
  * StorageWorkers handles all incoming request from the server. 
  * This class is aware of all storage needs. All writes to 
  * Storage should be handles through this Actor to avoid 
- * data concurrency issues. This is still a TODO item.
+ * data concurrency issues. 
  * 
+ * Reads to Data could be direct access.
  * 
  * 
  * @author sparade
@@ -28,8 +29,10 @@ class StorageWorkerActor extends WorkerHandler{
     return null;
   }
   
-  override def handleStorageMessage(data: Any) : ByteBuffer = {
-    return null;
+  /**
+   * All data writes will be handled over actor messaging with this call.
+   */
+  override def handleStorageMessage(data: Any) {
   }
 
 }

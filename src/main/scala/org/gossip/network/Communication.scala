@@ -34,7 +34,7 @@ object Communication {
 
     communication.connect(new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), handler)
     val workerActor = communication.getWorkerActorRef(handler)
-    workerActor ! "Test message out of network layer"
+    workerActor ! "TEST MSG"
 
     communication.awaitTermination
     println("End of communication")
@@ -44,21 +44,20 @@ object Communication {
   }
 
   class DummyWorkerActor extends WorkerHandler {
-    var count = 0;
+    var countRemote = 0;
     override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
       println(s"received ${new String(data.array())}")
-      count = count + 1;
-      if (count == 5) return null;
+      countRemote = countRemote + 1;
+      if (countRemote == 5) return null;
       println("returning World")
       return ByteBuffer.wrap("World".getBytes)
     }
 
     override def firstMessage: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
-
-    override def handleStorageMessage(data: Any): ByteBuffer = {
+    
+    override def handleStorageMessage(data: Any) {
       println("in DummyWorkerActor")
       println(s"received storage message outside of network layer $data")
-      return null;
     }
   }
 }

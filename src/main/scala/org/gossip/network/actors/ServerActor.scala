@@ -6,13 +6,17 @@ import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging._
 
 /**
- * 
+ * Support object to build @ServerActor
  */
 final object ServerSystem {
   def props (handler : WorkerHandler) : Props = Props.create(classOf[ServerActor], handler)
 }
 /**
  * Server actor starts the server to listen for gossip on the netowork
+ * 
+ * Worker Actor is used to process all request. @WorkerHandler is passed to WorkerActor to 
+ * extend its functionality.
+ * 
  */
 final class ServerActor(handler: WorkerHandler) extends Actor with ActorLogging {
   import context.system
