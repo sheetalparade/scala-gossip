@@ -11,7 +11,10 @@ import akka.actor.Props
 
 /**
  * @author sparade
+ * 
+ * Not in any use yet
  */
+
 object DataStorageSystem {
   def props: Props = Props.create(classOf[DataStorageActor])
 
