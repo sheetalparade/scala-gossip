@@ -35,7 +35,7 @@ object StorageManager {
    *
    * @author sparade
    */
-  class StorageWorkerActor extends WorkerHandler {
+  class StorageWorkerHandler extends WorkerHandler {
 
     override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
       return null;
