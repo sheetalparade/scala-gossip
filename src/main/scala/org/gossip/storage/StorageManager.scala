@@ -41,14 +41,8 @@ object StorageManager {
       return null;
     }
 
-    override def firstMessage: ByteBuffer = {
+    override def initialMessage: ByteBuffer = {
       return null;
-    }
-
-    /**
-     * All data writes will be handled over actor messaging with this call.
-     */
-    override def handleStorageMessage(data: Any) {
     }
 
   }

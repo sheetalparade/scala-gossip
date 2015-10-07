@@ -21,17 +21,15 @@ object CommunicationTest {
     println("Hi this is start of communication implementation")
     println()
     val handler = new DummyWorkerActor
-    val communication = Communication("test", InetAddress.getLoopbackAddress, 4000, handler)
+    Communication("test", InetAddress.getLoopbackAddress, 4000, handler)
 
-    Thread.sleep(5000)
+    Thread.sleep(500)
 
-    communication.connect(new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), handler)
-    val workerActor = communication.getWorkerActorRef(handler)
-    workerActor ! "TEST MSG"
+    Communication.connect("test", new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), handler)
 
-    communication.awaitTermination
+    Communication.awaitTermination("test")
     println("End of communication")
-    communication.shutdown
+    Communication.shutdown("test")
     //    sys.addShutdownHook()
     System.exit(0)
   }
@@ -48,11 +46,12 @@ object CommunicationTest {
       return ByteBuffer.wrap(ret.getBytes)
     }
 
-    override def firstMessage: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
+    override def initialMessage: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
     
-    override def handleStorageMessage(data: Any) {
+    override def handleStorageMessage(data: Any) :ByteBuffer = {
       println("in DummyWorkerActor")
       println(s"received storage message outside of network layer $data")
+      return null;
     }
   }
 

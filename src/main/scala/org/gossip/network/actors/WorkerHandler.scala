@@ -19,7 +19,7 @@ trait WorkerHandler {
   /**
    * Handles all messages received outside TCP connection.
    */
-  def handleStorageMessage(data: Any)
+  def handleStorageMessage(data: Any) :ByteBuffer = null
 
   /**
    * Any message the server system should transmit to the sender 
@@ -27,6 +27,6 @@ trait WorkerHandler {
    * 
    * if the message returned is null, no message is transmitted.
    */
-  def firstMessage: ByteBuffer
+  def initialMessage: ByteBuffer
 
 }

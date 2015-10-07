@@ -62,9 +62,9 @@ final object WorkerSystem {
             log.info(s"WorkerActor-CONTEXT default case")
         }
         log.info(s"WorkerActor wiriting back initial message after connection.")
-        val firstMsg = handler.firstMessage
+        val firstMsg = handler.initialMessage
         if (firstMsg != null)
-          connection ! Write(ByteString(handler.firstMessage), NoAck)
+          connection ! Write(ByteString(firstMsg), NoAck)
       case Closed =>
         log.info(s"WorkerActor connection closed.")
         context stop self
