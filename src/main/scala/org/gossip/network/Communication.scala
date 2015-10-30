@@ -22,10 +22,10 @@ object Communication {
        commObjs += (namespace ->  new Communication(namespace: String, binding: InetAddress, port: Int, handler: WorkerHandler))
   }
 
-  def connect(namespace: String, seed: InetSocketAddress, handler: WorkerHandler) {
+  def connect(namespace: String) {
     val communication = commObjs.get(namespace)
     if (communication != None)
-      communication.get.connect(seed, handler)
+      communication.get.connect()
   }
   
   def awaitTermination(namespace: String) {
@@ -58,20 +58,19 @@ object Communication {
     private val serverActor = actorSystem.actorOf(ServerSystem.props(handler))
 
     serverActor ! Bind(serverActor, new InetSocketAddress(binding, port))
-
-    /**
+    
+     /**
      * Start gossiping with initial communication with seed servers.
      * The seed server could be itself and no communication needed.
      */
-    def connect(seed: InetSocketAddress, handler: WorkerHandler) {
+    def connect() {
+      val seed = new InetSocketAddress(binding, port)
       println(s"Connect to seed $seed with worker handler")
       val worker = getWorkerActorRef(handler)
       worker ! Connect(remoteAddress = seed)
       println("now connected")
-//          Thread.sleep(100)
-//      worker ! Write(ByteString(handler.initialMessage), NoAck)
     }
-
+    
     /**
      * returns the worker actor reference from same actorsystem.
      *

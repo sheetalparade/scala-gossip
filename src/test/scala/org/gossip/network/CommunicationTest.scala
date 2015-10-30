@@ -4,7 +4,9 @@ import java.nio.ByteBuffer
 import org.gossip.network.actors.WorkerHandler
 import java.net.InetSocketAddress
 import java.net.InetAddress
-
+import org.gossip.messages.{Message, Verb, GossipSyn, MessageHandler}
+import org.gossip.state.GossipDigest
+import org.gossip.messages.GossipSyn
 
 /**
  * @author sparade
@@ -25,7 +27,7 @@ object CommunicationTest {
 
     Thread.sleep(500)
 
-    Communication.connect("test", new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), handler)
+    Communication.connect("test")
 
     Communication.awaitTermination("test")
     println("End of communication")
