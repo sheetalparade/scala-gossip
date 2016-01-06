@@ -4,6 +4,8 @@ import java.nio.ByteBuffer
 import org.gossip.network.actors.WorkerHandler
 import java.net.InetSocketAddress
 import java.net.InetAddress
+import org.gossip.akka.GossipActorSystem
+import org.gossip.scheduler.DefaultExecutionOnce
 
 
 /**
@@ -20,21 +22,21 @@ object CommunicationTest {
   def main(args: Array[String]) {
     println("Hi this is start of communication implementation")
     println()
-    val handler = new DummyWorkerActor
-    Communication("test", InetAddress.getLoopbackAddress, 4000, handler)
+    val handler = new DummyWorkerHandler
+    Server(InetAddress.getLoopbackAddress, 4000, handler)
 
     Thread.sleep(500)
 
-    Communication.connect("test", new InetSocketAddress(InetAddress.getLoopbackAddress, 4000), handler)
-
-    Communication.awaitTermination("test")
+    DefaultExecutionOnce.executeOnce(handler, new InetSocketAddress(InetAddress.getLoopbackAddress, 4000))
+    
+    GossipActorSystem.awaitTermination
     println("End of communication")
-    Communication.shutdown("test")
+    GossipActorSystem.shutdown
     //    sys.addShutdownHook()
     System.exit(0)
   }
 
-  class DummyWorkerActor extends WorkerHandler {
+  class DummyWorkerHandler extends WorkerHandler {
     var countRemote = 0;
     override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
       val recd = new String(data.array())

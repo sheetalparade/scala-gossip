@@ -4,12 +4,29 @@ import java.nio.ByteBuffer
 import akka.actor.{ Props, Actor, ActorLogging, ActorRef }
 import akka.io.{ IO, Tcp }
 import akka.util.ByteString
+import java.net.InetSocketAddress
+import scala.collection.mutable.Set
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Support object to build @WorkerActor
  */
 final object WorkerSystem {
   def props(handler: WorkerHandler): Props = Props.create(classOf[WorkerActor], handler)
+  val counter: AtomicLong = new AtomicLong(0)
+  val version: AtomicLong = new AtomicLong(0)
+  var hostList: Set[InetSocketAddress] = Set()
+  def add (remote: InetSocketAddress) {
+    if(hostList add remote) version.incrementAndGet()
+  }
+
+  def nextHost = {
+    hostList.toList((counter.getAndIncrement%hostList.size).toInt)
+  }
+  
+  def remove (remote: InetSocketAddress) {
+    if(hostList remove(remote)) version.incrementAndGet()
+  }
 
   /**
    * Primary class to process all requests. Two scenario in which the actor is invoked.
@@ -34,14 +51,19 @@ final object WorkerSystem {
       case connect: Connect =>
         log.info(s"WorkerActor Requested connection to seed " + connect)
         IO(Tcp) ! connect
-      case commandFailed @ CommandFailed(_: Connect) =>
+      case commandFailed @ CommandFailed(cmd) =>
         log.info(s"WorkerActor Command failed $commandFailed")
+        log.info(s"original cmd $cmd")
+        cmd match {
+          case c: Connect => remove(c.remoteAddress)
+        }
         context stop self
       case received: Received =>
         log.info(s"WorkerActor received message $received")
         handleReceive(received)
       case connected @ Connected(remote, local) =>
         log.info(s"WorkerActor successfully connected $connected")
+        add(remote)
         val connection = sender()
         connection ! Register(self)
         context become {
