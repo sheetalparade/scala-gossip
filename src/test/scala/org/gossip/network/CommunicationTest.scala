@@ -38,7 +38,7 @@ object CommunicationTest {
 
   class DummyWorkerHandler extends WorkerHandler {
     var countRemote = 0;
-    override def handleRemoteMessage(data: ByteBuffer): ByteBuffer = {
+    override def requestDelta(data: ByteBuffer): ByteBuffer = {
       val recd = new String(data.array())
       println(s"received $recd")
       countRemote = countRemote + 1;
@@ -48,13 +48,12 @@ object CommunicationTest {
       return ByteBuffer.wrap(ret.getBytes)
     }
 
-    override def initialMessage: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
+    override def requestMetaData: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
     
-    override def handleStorageMessage(data: Any) :ByteBuffer = {
-      println("in DummyWorkerActor")
-      println(s"received storage message outside of network layer $data")
-      return null;
+    override def merge(data: ByteBuffer) = {
+      null
     }
+    
   }
 
 }

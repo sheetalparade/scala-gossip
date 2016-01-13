@@ -8,25 +8,19 @@ import java.nio.ByteBuffer
  * @author sparade
  */
 trait WorkerHandler {
+    
+  /**
+   * Request metadata i.e versions to forward for comparisions
+   * null output indicates close of connection.
+   */
+  def requestMetaData: ByteBuffer
   
   /**
-   * Handle all messages received from TCP connection.
-   * The output is forwarded to sender.
-   * If the output is null, Close message is forwarded.
+   * null output indicates close of connection.
    */
-  def handleRemoteMessage(data: ByteBuffer): ByteBuffer
-
-  /**
-   * Handles all messages received outside TCP connection.
-   */
-  def handleStorageMessage(data: Any) :ByteBuffer = null
-
-  /**
-   * Any message the server system should transmit to the sender 
-   * on successful connection request.
-   * 
-   * if the message returned is null, no message is transmitted.
-   */
-  def initialMessage: ByteBuffer
+  def requestDelta(data: ByteBuffer) : ByteBuffer 
+  
+  
+  def merge(data: ByteBuffer) : ByteBuffer
 
 }

@@ -34,7 +34,11 @@ object Server {
     /**
      * Initialize the class
      */
-    val serverActor = GossipActorSystem.getServerActorRef(handler)
-    serverActor ! Bind(serverActor, new InetSocketAddress(binding, port))
+    val serverActorRef = GossipActorSystem.getServerActorRef(handler)
+    serverActorRef ! Bind(serverActorRef, new InetSocketAddress(binding, port))
+    
+    def status = {
+      
+    }
   }
 }

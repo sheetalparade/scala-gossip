@@ -14,8 +14,10 @@ object DefaultExecutionOnce {
       GossipActorSystem.getWorkerActorRef(handler) ! Connect(remoteAddress)     
   }
   
-  def executeOnceNext(handler: WorkerHandler) {
-      GossipActorSystem.getWorkerActorRef(handler) ! Connect(remoteAddress = WorkerSystem.nextHost)     
+  def executeOnceNextHost(handler: WorkerHandler) {
+    val nextHost = WorkerSystem.nextHost
+    if(!nextHost.isEmpty)
+      GossipActorSystem.getWorkerActorRef(handler) ! Connect(remoteAddress = nextHost.get)
   }
 
 }
