@@ -1,6 +1,7 @@
 package org.gossip.network.actors
 
 import java.nio.ByteBuffer
+import java.io.InputStream
 
 /**
  * Extends @WorkerActor functionality without exposing Actor internals.

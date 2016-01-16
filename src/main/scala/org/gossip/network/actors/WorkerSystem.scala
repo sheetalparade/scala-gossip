@@ -19,29 +19,13 @@ final object WorkerSystem {
   private final val BYTE_ORDER = ByteOrder.BIG_ENDIAN;
   private final val BYTE_0 = '0'.toByte
   private final val BYTE_1 = '1'.toByte
+  private final val BYTE_2 = '2'.toByte
+  private final val BYTE_3 = '3'.toByte
+  private final val BYTE_4 = '4'.toByte
+  private final val BYTE_5 = '5'.toByte
+  private final val BYTE_6 = '6'.toByte
 
-  private val counter: AtomicLong = new AtomicLong(0)
-  private val version: AtomicLong = new AtomicLong(0)
-  private val lastUpdateTimeStamp : AtomicLong = new AtomicLong(System.currentTimeMillis())
-  private val hostList: Set[InetSocketAddress] = Set()
-  
-  private def add (remote: InetSocketAddress) {
-    if(hostList add remote) {
-      version.incrementAndGet()
-      lastUpdateTimeStamp.set(System.currentTimeMillis())
-    }
-  }
-
-  def nextHost = {
-    hostList.toList.lift((counter.getAndIncrement%hostList.size).toInt)
-  }
-  
-  def remove (remote: InetSocketAddress) {
-    if(hostList remove remote) {
-      version.incrementAndGet()
-      lastUpdateTimeStamp.set(System.currentTimeMillis())
-    }
-  }
+  def nextHost = WorkerData.nextHost
   
   /**
    * Primary class to process all requests. Two scenario in which the actor is invoked.
@@ -70,7 +54,7 @@ final object WorkerSystem {
         log.info(s"WorkerActor Command failed $commandFailed")
         log.info(s"original cmd $cmd")
         cmd match {
-          case c: Connect => remove(c.remoteAddress)
+          case c: Connect => WorkerData.remove(c.remoteAddress)
         }
         context stop self
       case received: Received =>
@@ -78,7 +62,7 @@ final object WorkerSystem {
         handleReceive(received)
       case connected @ Connected(remote, local) =>
         log.info(s"WorkerActor successfully connected $connected")
-        add(remote)
+        WorkerData.add(remote)
         val connection = sender()
         connection ! Register(self)
         context become {
@@ -112,10 +96,10 @@ final object WorkerSystem {
 
     private def metaDataRequest = {
       val firstMsg = handler.requestMetaData
-      val builder = new ByteStringBuilder
+      val builder = new ByteStringBuilder      
       builder.putByte(BYTE_0)
-      builder.putLong(lastUpdateTimeStamp.longValue())(BYTE_ORDER)
-      builder.putInt(version.intValue)(BYTE_ORDER)
+      builder ++= WorkerData.getMetaData
+      builder.putByte(BYTE_2)
       if(firstMsg != null) builder.append(ByteString(firstMsg))
       builder.result()
     }
@@ -128,31 +112,185 @@ final object WorkerSystem {
      *
      */
     private def handleReceive(received: Received) = {
-      val incomingData: ByteString = received.data
-      val firstByte = incomingData.iterator.getByte
-      firstByte match {
+      val incomingData = received.data.iterator
+      val firstByte = incomingData.getByte
+      val (t, v) = (incomingData.getLong(BYTE_ORDER), incomingData.getInt(BYTE_ORDER))
+      val returnMsg = firstByte match {
         case BYTE_0 =>
-          val (t, v) = (incomingData.iterator.getLong(BYTE_ORDER), incomingData.iterator.getInt(BYTE_ORDER))
-          if(lastUpdateTimeStamp.longValue() <= t && version.intValue() != v ) {
-            //Handle versions for hosts
-          }
+          val hostData = WorkerData.compareVersion(t, v)
+          incomingData.getByte
+          val builder = new ByteStringBuilder
+//          if(hostData.size == 0) {
+//            builder.putByte(BYTE_3)
+//            builder.putInt(hostData.size)(BYTE_ORDER) ++= hostData
+//          } else {
+//            builder.putByte(BYTE_4)
+//          }
+          builder ++= hostData
+          builder ++= ByteString(handler.requestDelta(incomingData.toByteString.asByteBuffer))
+          builder.result()
         case BYTE_1 =>
-          val hostCount = incomingData.iterator.getInt(BYTE_ORDER)
-          val h = for (i <- (0 to hostCount)) yield {
-            incomingData.iterator.getInt(BYTE_ORDER)
+          val builder = new ByteStringBuilder
+          val dataType = incomingData.getByte
+          val hostData = dataType match {
+            case BYTE_2 =>
+              builder.putByte(BYTE_3)
+              val d = WorkerData.toByteString
+              builder.putInt(d.size)(BYTE_ORDER)
+              builder ++= d
+            case BYTE_3 =>
+              val hostDataCount = incomingData.getInt(BYTE_ORDER)
+              builder ++= WorkerData.merge(incomingData.take(hostDataCount).toByteString)
+            case BYTE_4 =>
+              
           }
-          h.toSet
-          //merge changes
+          val appData = handler.merge(incomingData.toByteString.asByteBuffer)
+          val partialData = if(builder.length > 0){
+            builder.result()
+          } else if(appData != null){
+            builder.putByte(BYTE_4)
+            builder.result()
+          }else {
+            builder.result()
+          }
+          if(appData != null) {
+            partialData ++ ByteString(appData)
+          } else {
+            partialData
+          }
         case _ =>
+          ByteString()
       }
-      val returnMsg = handler.requestDelta(received.data.toByteBuffer)
       val connection = sender()
-      if (returnMsg != null) {
-        connection ! Write(ByteString(returnMsg), NoAck)
+      if (returnMsg.size != 0) {
+        connection ! Write(ByteString(BYTE_1) ++ WorkerData.getMetaData ++ returnMsg, NoAck)
       } else {
         connection ! Close
       }
     }
+  }
+  
+  private object WorkerData {
+    private val counter: AtomicLong = new AtomicLong(0)
+    private val version: AtomicLong = new AtomicLong(0)
+    private val lastUpdateTimeStamp : AtomicLong = new AtomicLong(System.currentTimeMillis())
+    private val hostList: Set[InetSocketAddress] = Set()
+    private val removedList: Set[InetSocketAddress] = Set()
+    
+    def add (remote: InetSocketAddress) {
+      synchronized {
+        val hostListChange = hostList add remote
+        val removeListChange = removedList remove remote
+        if(hostListChange || removeListChange) {
+          version.incrementAndGet()
+          lastUpdateTimeStamp.set(System.currentTimeMillis())
+        }
+      }
+    }
+  
+    def nextHost = {
+      hostList.toList.lift((counter.getAndIncrement%hostList.size).toInt)
+    }
+    
+    def remove (remote: InetSocketAddress) {
+      synchronized {
+        val hostListChange = hostList remove remote
+        val removeListChange = removedList add remote
+  
+        if(hostListChange || removeListChange) {
+          version.incrementAndGet()
+          lastUpdateTimeStamp.set(System.currentTimeMillis())
+        }
+      }
+    }
+    
+    def getMetaData = {
+      val builder = new ByteStringBuilder
+      builder.putLong(lastUpdateTimeStamp.longValue())(BYTE_ORDER)
+      builder.putInt(version.intValue)(BYTE_ORDER)
+      builder.result()
+    }
+    
+    def compareVersion(remoteTS: Long, remoteVersion: Long) = {
+      val builder = new ByteStringBuilder
+      if(remoteTS < lastUpdateTimeStamp.get && remoteVersion < version.get) {
+        val d = toByteString
+        builder.putByte(BYTE_3)
+        builder.putInt(d.size)(BYTE_ORDER)
+        builder ++= toByteString
+      } else if (remoteTS > lastUpdateTimeStamp.get && remoteVersion > version.get){
+        builder.putByte(BYTE_2)
+      } else {
+        builder.putByte(BYTE_4)
+      }
+      builder.result()
+    }
+    
+    def toByteString = {
+      val builder = new ByteStringBuilder
+      builder.putLong(lastUpdateTimeStamp.get)(BYTE_ORDER)
+      builder.putLong(version.get)(BYTE_ORDER)
+      builder.putInt(hostList.size)(BYTE_ORDER)
+      hostList.map(x => {
+        val host = x.getHostString
+       (host.size, host, x.getPort)
+      }).foreach ( x =>  {
+        builder.putInt(x._1)(BYTE_ORDER)
+        builder.putBytes(x._2.getBytes)
+        builder.putInt(x._3)(BYTE_ORDER)
+      })
+      builder.putInt(removedList.size)(BYTE_ORDER)
+      removedList.map(x => {
+       val host = x.getHostString
+       (host.size, host, x.getPort)
+      }).foreach ( x =>  {
+        builder.putInt(x._1)(BYTE_ORDER)
+        builder.putBytes(x._2.getBytes)
+        builder.putInt(x._3)(BYTE_ORDER)
+      })
+      builder.result()
+    }
+    
+    def merge(incomingData: ByteString) : ByteString= {
+      
+      val builder = new ByteStringBuilder
+      if(incomingData.size > 0) {
+        val iter = incomingData.iterator
+        val remoteTS = iter.getLong(BYTE_ORDER)
+        val remoteVersion = iter.getLong(BYTE_ORDER)
+        if(remoteTS < lastUpdateTimeStamp.get && remoteVersion < version.get) {
+          builder ++= toByteString
+        } else {
+          val hostListSize = iter.getInt(BYTE_ORDER)
+          val remoteHostList = (0 to hostListSize).map(x => {
+            val hostNameSize = iter.getInt(BYTE_ORDER)
+            val hostNameArray : Array[Byte] = Array.ofDim[Byte](hostNameSize)
+            iter.copyToArray(hostNameArray)
+            val hostName = hostNameArray.toString()
+            val port = iter.getInt(BYTE_ORDER)
+            (hostName, port)
+          }).toList.map(x => new InetSocketAddress(x._1, x._2))
+          val removeListSize = iter.getInt(BYTE_ORDER)
+          val remoteRemoveList = (0 to removeListSize).map(x => {
+            val hostNameSize = iter.getInt(BYTE_ORDER)
+            val hostNameArray : Array[Byte] = Array.ofDim[Byte](hostNameSize)
+            iter.copyToArray(hostNameArray)
+            val hostName = hostNameArray.toString()
+            val port = iter.getInt(BYTE_ORDER)
+            (hostName, port)
+          }).toList.map(x => new InetSocketAddress(x._1, x._2))
+          synchronized {
+            hostList ++= remoteHostList
+            removedList ++= remoteRemoveList
+            version.incrementAndGet()
+            lastUpdateTimeStamp.set(System.currentTimeMillis())
+          }
+        }
+      } 
+      builder.result()
+      
+    }
+
   }
 }
 

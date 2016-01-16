@@ -39,7 +39,14 @@ object CommunicationTest {
   class DummyWorkerHandler extends WorkerHandler {
     var countRemote = 0;
     override def requestDelta(data: ByteBuffer): ByteBuffer = {
-      val recd = new String(data.array())
+      val b = if (data.hasArray()) {
+        data.array()
+      } else {
+        val bytes = Array.ofDim[Byte](data.remaining())
+        data.get(bytes);
+        bytes
+      }
+      val recd = new String(b)
       println(s"received $recd")
       countRemote = countRemote + 1;
       if (countRemote == 5) return null;
@@ -51,7 +58,7 @@ object CommunicationTest {
     override def requestMetaData: ByteBuffer = ByteBuffer.wrap("Hello".getBytes());
     
     override def merge(data: ByteBuffer) = {
-      null
+      requestDelta(data)
     }
     
   }
